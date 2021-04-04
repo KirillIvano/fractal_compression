@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "U4OdqbfRhTgjZb2X4bUdZct9ooAGtS0mutlpTGFglasf07aOf7qTfJXcGqDyxjfMeWMnRv4ZqvkbahCyVDLSzA==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\ivann\\source\\repos\\ConsoleApp12\\ConsoleApp12\\ConsoleApp12.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\ivann\\.nuget\\packages\\microsoft.netcore.platforms\\5.0.0\\microsoft.netcore.platforms.5.0.0.nupkg.sha512",
+    "C:\\Users\\ivann\\.nuget\\packages\\microsoft.win32.systemevents\\5.0.0\\microsoft.win32.systemevents.5.0.0.nupkg.sha512",
+    "C:\\Users\\ivann\\.nuget\\packages\\system.drawing.common\\5.0.2\\system.drawing.common.5.0.2.nupkg.sha512"
+  ],
+  "logs": []
+}
