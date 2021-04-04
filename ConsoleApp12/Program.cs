@@ -7,42 +7,6 @@ using System.Linq;
 
 namespace ConsoleApp12
 {
-    class Snapshoter
-    {
-        private static string transformationsSnapshotFile = Path.Join("C:/Users/ivann/source/repos/ConsoleApp12/ConsoleApp12", "backup.txt");
-
-        public static Transformation[] RetrieveRawTransformations()
-        {
-            var lines = File.ReadAllLines(transformationsSnapshotFile);
-
-            return lines.Select<string, Transformation>(s =>
-            {
-                var vars = s.Split(",");
-
-                int angle = int.Parse(vars[0]);
-                bool flip = bool.Parse(vars[1]);
-                int x = int.Parse(vars[2]);
-                int y = int.Parse(vars[3]);
-                int[][] result = vars[4].Split("|").Select(s => s.Split(" ").Select((c) => int.Parse(c)).ToArray()).ToArray();
-
-                return new Transformation(x, y, angle, flip, result, 0);
-            }).ToArray();
-        }
-   
-        private static string GetTransformationView(Transformation t)
-        {
-            return $"{t.angle},{t.flip},{t.x},{t.y},{String.Join("|", t.result.Select(b => String.Join(" ", b)))}";
-        }
-
-        public static void SaveRawTransformations(IEnumerable<Transformation> transforms)
-        {
-            File.WriteAllLines(
-                transformationsSnapshotFile,
-                transforms.Select(GetTransformationView)
-            );
-        }
-    } 
-
     class Utils
     {
         public const int RANG_RATE = 30;
@@ -238,11 +202,6 @@ namespace ConsoleApp12
                 }
             }
         }
-
-        public static void FlipRang(int[][] rang)
-        {
-
-        }
      }
 
     class Transformation
@@ -251,17 +210,15 @@ namespace ConsoleApp12
         public int y;
 
         public int angle;
-        public bool flip;
         public int[][] result;
         public double avg;
 
-        public Transformation(int x, int y, int angle, bool flip, int[][] result, double avg)
+        public Transformation(int x, int y, int angle, int[][] result, double avg)
         {
             this.x = x;
             this.y = y;
 
             this.angle = angle;
-            this.flip = flip;
             this.result = result;
 
             this.avg = avg;
@@ -276,15 +233,13 @@ namespace ConsoleApp12
         public int h;
 
         public int angle;
-        public bool flip;
 
-        public MemTransformation(int x, int y, int angle, bool flip, double c, int h)
+        public MemTransformation(int x, int y, int angle, double c, int h)
         {
             this.x = x;
             this.y = y;
 
             this.angle = angle;
-            this.flip = flip;
             this.h = h;
             this.c = c;
         }
@@ -299,13 +254,11 @@ namespace ConsoleApp12
             this.bmp = bmp;
         }
 
-        private int[][] ApplyTransforms(int[][] domain, bool shouldFlip, int rotateAngle, double contrast, double brightness)
+        private int[][] ApplyTransforms(int[][] domain, int rotateAngle, double contrast, double brightness)
         {
             var rang = Utils.ReduceDomainPart(domain);
 
             Utils.RotateRang(rang, rotateAngle);
-
-            if (shouldFlip) Utils.FlipRang(rang);
 
             Utils.MultiplyRang(rang, contrast);
             Utils.AddToRang(rang, (int) brightness);
@@ -328,24 +281,14 @@ namespace ConsoleApp12
                     
                     for (var k = 0; k < 6; k++)
                     {
-                        var withFlip = ApplyTransforms(domain, true, k * 90, 1, 0);
-                        var withoutFlip = ApplyTransforms(domain, false, k * 90, 1, 0);
+                        var res = ApplyTransforms(domain, k * 90, 1, 0);
 
                         transformations.Add(new Transformation(
                             j,
                             i,
                             k * 90,
-                            false,
-                            withFlip,
-                            Utils.GetAverage(withFlip)
-                        ));
-                        transformations.Add(new Transformation(
-                            j,
-                            i,
-                            k * 90,
-                            true,
-                            withoutFlip,
-                            Utils.GetAverage(withoutFlip)
+                            res,
+                            Utils.GetAverage(res)
                         ));
                     }
                 }
@@ -361,7 +304,6 @@ namespace ConsoleApp12
 
             var transformations = GenerateTransformations();
 
-            Snapshoter.SaveRawTransformations(transformations);
             var transformationsMatrix = new MemTransformation[h][];
 
             for (int i = 0; i < h; i++)
@@ -391,7 +333,7 @@ namespace ConsoleApp12
 
                         if (metric < min)
                         {
-                            transformationsMatrix[i][j] = new MemTransformation(trans.x, trans.y, trans.angle, trans.flip, coeff, 0);
+                            transformationsMatrix[i][j] = new MemTransformation(trans.x, trans.y, trans.angle, coeff, 0);
                             min = metric;
                         }
                     }
@@ -419,7 +361,7 @@ namespace ConsoleApp12
                     {
                         var trans = transformationsMatrix[i][j];
                         var domain = Utils.GetBitmapPart(bmp, trans.x * Utils.DOMAIN_RATE, trans.y * Utils.DOMAIN_RATE, Utils.DOMAIN_RATE);
-                        var res = ApplyTransforms(domain, trans.flip, trans.angle, trans.c, trans.h);
+                        var res = ApplyTransforms(domain, trans.angle, trans.c, trans.h);
 
                         Utils.ApplyRangPart(bmp, res, j * Utils.RANG_RATE, i * Utils.RANG_RATE);
                     }
