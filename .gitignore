@@ -1,4 +1,4 @@
 *.bmp
-bin/*
-obj/*
+/ConsoleApp12/bin/*
+/ConsoleApp12/obj/*
 .vs/*
