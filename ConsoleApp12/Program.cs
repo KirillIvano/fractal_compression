@@ -6,10 +6,10 @@ namespace ConsoleApp12
 {
     class Utils
     {
-        public const int RANG_RATE = 30;
+        public const int RANG_RATE = 50;
         public const int DOMAIN_RATE = RANG_RATE * 2;
 
-        public static double GetRangMetrik(int[][] r1, int[][] r2)
+        public static double GetRangMetrik(Color[][] r1, Color[][] r2)
         {
             double acc = 0;
 
@@ -17,25 +17,28 @@ namespace ConsoleApp12
             {
                 for (int j = 0; j < RANG_RATE; j++)
                 {
-                    acc += Math.Pow(r1[j][i] - r2[j][i], 2);
+                    acc += Math.Pow(r1[j][i].R - r2[j][i].R, 2) +
+                        Math.Pow(r1[j][i].G - r2[j][i].G, 2) +
+                        Math.Pow(r1[j][i].B - r2[j][i].B, 2);
                 }
             }
 
             return acc;
         }
 
-        public static int[][] GenerateNoise(int size)
+        public static Color[][] GenerateNoise(int size)
         {
-            int[][] res = new int[size][];
+            Color[][] res = new Color[size][];
+
             var rand = new Random();
 
             for (int i = 0; i < size; i++)
             {
-                res[i] = new int[size];
+                res[i] = new Color[size];
 
                 for (int j = 0; j < size; j++)
                 {
-                    res[i][j] = rand.Next(0, 255);
+                    res[i][j] = Color.FromArgb(rand.Next(0, 255), rand.Next(0, 255), rand.Next(0, 255));
                 }
             }
 
@@ -49,8 +52,15 @@ namespace ConsoleApp12
             return Color.FromArgb(validVal, validVal, validVal);
         }
 
+        public static int GetSafeColor(double val)
+        {
+            int validVal = (int) Math.Max(0, Math.Min(255, val));
+
+            return validVal;
+        }
+
         // Перенос значений из ранговой области на итоговый битмап
-        public static void ApplyRangPart(Bitmap bits, int[][] rang, int x, int y)
+        public static void ApplyRangPart(Bitmap bits, Color[][] rang, int x, int y)
         {
 
             for (int i = 0; i < RANG_RATE; i++)
@@ -58,27 +68,27 @@ namespace ConsoleApp12
                 for (int j = 0; j < RANG_RATE; j++)
                 {
                     var val = rang[j][i];
-                    bits.SetPixel(j + x, i + y, GetGrayscaleColor(val));
+                    bits.SetPixel(j + x, i + y, val);
                 }
             }
         }
 
         // Выделение доменной части из битмапа
-        public static int[][] GetBitmapPart(Bitmap bits, int x, int y, int size)
+        public static Color[][] GetBitmapPart(Bitmap bits, int x, int y, int size)
         {
-            int[][] res = new int[size][];
+            Color[][] res = new Color[size][];
             int i, j;
 
             for (i = 0; i < size; i++)
             {
-                res[i] = new int[size];
+                res[i] = new Color[size];
             }
 
             for (i = 0; i < size; i++)
             {
                 for (j = 0; j < size; j++)
                 {
-                    res[j][i] = bits.GetPixel(j + x, i + y).R;
+                    res[j][i] = bits.GetPixel(j + x, i + y);
                 }
             }
 
@@ -86,26 +96,41 @@ namespace ConsoleApp12
         }
 
         // Приведение доменной области к ранговой
-        public static int[][] ReduceDomainPart(int[][] domain)
+        public static Color[][] ReduceDomainPart(Color[][] domain)
         {
-            var res = new int[RANG_RATE][];
+            var res = new Color[RANG_RATE][];
 
             for (int i = 0; i < RANG_RATE; i++)
             {
-                res[i] = new int[RANG_RATE];
+                res[i] = new Color[RANG_RATE];
             }
 
             for (int i = 0; i < RANG_RATE; i++)
             {
                 for (int j = 0; j < RANG_RATE; j++)
                 {
-                    res[j][i] = (int)((
-                        domain[2 * i][2 * j] + 
-                        domain[2 * i + 1][2 * j] + 
-                        domain[2 * i][2 * j + 1] + 
-                        domain[2 * i + 1][2 * j + 1]
-                        ) / 4
-                   );
+                    var r = (int)((
+                        domain[2 * i][2 * j].R +
+                        domain[2 * i + 1][2 * j].R +
+                        domain[2 * i][2 * j + 1].R +
+                        domain[2 * i + 1][2 * j + 1].R
+                        ) / 4);
+
+                    var g = (int)((
+                        domain[2 * i][2 * j].R +
+                        domain[2 * i + 1][2 * j].R +
+                        domain[2 * i][2 * j + 1].R +
+                        domain[2 * i + 1][2 * j + 1].R
+                        ) / 4);
+
+                    var b = (int)((
+                        domain[2 * i][2 * j].R +
+                        domain[2 * i + 1][2 * j].R +
+                        domain[2 * i][2 * j + 1].R +
+                        domain[2 * i + 1][2 * j + 1].R
+                        ) / 4);
+
+                    res[j][i] = Color.FromArgb(r, g, b);
                 }
             }
 
@@ -113,7 +138,7 @@ namespace ConsoleApp12
         }
 
         // Получение среднего значения по произвольной матрице
-        public static double GetAverage(int[][] matrix)
+        public static double GetAverage(Color[][] matrix, int component)
         {
             int yl = matrix.Length;
             if (yl == 0)
@@ -128,7 +153,18 @@ namespace ConsoleApp12
             {
                 for (int j = 0; j < xl; j++)
                 {
-                    acc += matrix[i][j];
+                    if (component == 0)
+                    {
+                        acc += matrix[i][j].R;
+                    }
+                    else if (component == 1)
+                    {
+                        acc += matrix[i][j].G;
+                    }
+                    else if (component == 2)
+                    {
+                        acc += matrix[i][j].B;
+                    }
                 }
             }
 
@@ -138,24 +174,29 @@ namespace ConsoleApp12
         }
 
         // Умножение всех элементов на значение
-        public static void MultiplyRang(int[][] mat, double c)
+        public static void MultiplyRang(Color[][] mat, double[] c)
         {
             for (int i = 0; i < RANG_RATE; i++)
             {
                 for (int j = 0; j < RANG_RATE; j++)
                 {
-                    mat[j][i] = (int) (mat[j][i] * c);
+                    var curr = mat[j][i];
+                    mat[j][i] = Color.FromArgb(
+                        GetSafeColor(curr.R * c[0]),
+                        GetSafeColor(curr.G * c[1]),
+                        GetSafeColor(curr.B * c[2])
+                    );
                 }
             }
         }
 
-        public static int[][] CopyRang(int[][] src)
+        public static Color[][] CopyRang(Color[][] src)
         {
-            var res = new int[RANG_RATE][];
+            var res = new Color[RANG_RATE][];
 
             for (int i = 0; i < RANG_RATE; i++)
             {
-                res[i] = new int[RANG_RATE];
+                res[i] = new Color[RANG_RATE];
             }
 
             for (int i = 0; i < RANG_RATE; i++)
@@ -170,19 +211,24 @@ namespace ConsoleApp12
         }
 
         // Добавление значения ко всем элементам
-        public static void AddToRang(int[][] mat, int val)
+        public static void AddToRang(Color[][] mat, Color val, int positive = 1)
         {
             for (int i = 0; i < RANG_RATE; i++)
             {
                 for (int j = 0; j < RANG_RATE; j++)
                 {
-                    mat[j][i] += val;
+                    var prev = mat[j][i];
+                    mat[j][i] = Color.FromArgb(
+                        GetSafeColor(prev.R + val.R * positive),
+                        GetSafeColor(prev.G + val.G * positive),
+                        GetSafeColor(prev.B + val.B * positive)
+                    );
                 }
             }
         }
 
         // Вращение против часовой стрелки без вспомогательных массивов
-        public static void RotateRang(int[][] rang, int angle)
+        public static void RotateRang(Color[][] rang, int angle)
         {
             for (int curr = angle; curr > 0; curr -= 90)
             {
@@ -190,8 +236,8 @@ namespace ConsoleApp12
                 {
                     for (int j = i; j < RANG_RATE - i - 1; j++)
                     {
-                        int temp = rang[i][j];
-                        rang[i][j] = rang[RANG_RATE - 1 - j][i] + 3;
+                        Color temp = rang[i][j];
+                        rang[i][j] = rang[RANG_RATE - 1 - j][i];
                         rang[RANG_RATE - 1 - j][i] = rang[RANG_RATE - 1 - i][RANG_RATE - 1 - j];
                         rang[RANG_RATE - 1 - i][RANG_RATE - 1 - j] = rang[j][RANG_RATE - 1 - i];
                         rang[j][RANG_RATE - 1 - i] = temp;
@@ -207,10 +253,10 @@ namespace ConsoleApp12
         public int y;
 
         public int angle;
-        public int[][] result;
-        public double avg;
+        public Color[][] result;
+        public double[] avg;
 
-        public Transformation(int x, int y, int angle, int[][] result, double avg)
+        public Transformation(int x, int y, int angle, Color[][] result, double[] avg)
         {
             this.x = x;
             this.y = y;
@@ -226,18 +272,16 @@ namespace ConsoleApp12
     {
         public int x;
         public int y;
-        public double c;
-        public int h;
+        public double[] c;
 
         public int angle;
 
-        public MemTransformation(int x, int y, int angle, double c, int h)
+        public MemTransformation(int x, int y, int angle, double[] c)
         {
             this.x = x;
             this.y = y;
 
             this.angle = angle;
-            this.h = h;
             this.c = c;
         }
     }
@@ -251,14 +295,12 @@ namespace ConsoleApp12
             this.bmp = bmp;
         }
 
-        private int[][] ApplyTransforms(int[][] domain, int rotateAngle, double contrast, double brightness)
+        private Color[][] ApplyTransforms(Color[][] domain, int rotateAngle, double[] contrast)
         {
             var rang = Utils.ReduceDomainPart(domain);
 
             Utils.RotateRang(rang, rotateAngle);
-
             Utils.MultiplyRang(rang, contrast);
-            Utils.AddToRang(rang, (int) brightness);
 
             return rang;
         }
@@ -278,14 +320,18 @@ namespace ConsoleApp12
                     
                     for (var k = 0; k < 6; k++)
                     {
-                        var res = ApplyTransforms(domain, k * 90, 1, 0);
+                        var res = ApplyTransforms(domain, k * 90, new double[] { 1, 1, 1 });
+
+                        var avgR = Utils.GetAverage(res, 0);
+                        var avgG = Utils.GetAverage(res, 1);
+                        var avgB = Utils.GetAverage(res, 2);
 
                         transformations.Add(new Transformation(
                             j,
                             i,
                             k * 90,
                             res,
-                            Utils.GetAverage(res)
+                            new double[] { avgR, avgG, avgB }
                         ));
                     }
                 }
@@ -317,20 +363,26 @@ namespace ConsoleApp12
                         Utils.RANG_RATE
                     );
 
-                    var rangAverage = Utils.GetAverage(rang);
+                    var rangAverageR = Utils.GetAverage(rang, 0);
+                    var rangAverageG = Utils.GetAverage(rang, 1);
+                    var rangAverageB = Utils.GetAverage(rang, 2);
 
                     foreach (var trans in transformations)
                     {
-                        double coeff = rangAverage / trans.avg;
+                        double coeffR = rangAverageR / trans.avg[0];
+                        double coeffG = rangAverageG / trans.avg[1];
+                        double coeffB = rangAverageB / trans.avg[2];
 
-                        int[][] approximated = Utils.CopyRang(trans.result);
-                        Utils.MultiplyRang(approximated, coeff);
+                        var coeffs = new double[] { coeffR, coeffG, coeffB };
+
+                        Color[][] approximated = Utils.CopyRang(trans.result);
+                        Utils.MultiplyRang(approximated, coeffs);
 
                         var metric = Utils.GetRangMetrik(rang, approximated);
 
                         if (metric < min)
                         {
-                            transformationsMatrix[i][j] = new MemTransformation(trans.x, trans.y, trans.angle, coeff, 0);
+                            transformationsMatrix[i][j] = new MemTransformation(trans.x, trans.y, trans.angle, coeffs);
                             min = metric;
                         }
                     }
@@ -358,7 +410,7 @@ namespace ConsoleApp12
                     {
                         var trans = transformationsMatrix[i][j];
                         var domain = Utils.GetBitmapPart(bmp, trans.x * Utils.DOMAIN_RATE, trans.y * Utils.DOMAIN_RATE, Utils.DOMAIN_RATE);
-                        var res = ApplyTransforms(domain, trans.angle, trans.c, trans.h);
+                        var res = ApplyTransforms(domain, trans.angle, trans.c);
 
                         Utils.ApplyRangPart(bmp, res, j * Utils.RANG_RATE, i * Utils.RANG_RATE);
                     }
@@ -390,7 +442,7 @@ namespace ConsoleApp12
         static void Main(string[] args)
         {
             var bits = new Bitmap("C:/Users/ivann/source/repos/ConsoleApp12/ConsoleApp12/sample.bmp");
-            TranformToGrayScale(bits);
+
             bits.Save("C:/Users/ivann/source/repos/ConsoleApp12/ConsoleApp12/gray.bmp");
             var encoder = new Encoder(bits);
             encoder.Encode();
