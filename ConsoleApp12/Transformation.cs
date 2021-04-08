@@ -1,4 +1,5 @@
-﻿namespace ConsoleApp12
+﻿// Класс трансформации, которая формируется для первичного кодирования
+namespace ConsoleApp12
 {
     class Transformation
     {
@@ -7,9 +8,9 @@
 
         public int angle;
         public int[][] result;
-        public double avg;
+        public float avg;
 
-        public Transformation(int x, int y, int angle, int[][] result, double avg)
+        public Transformation(int x, int y, int angle, int[][] result, float avg)
         {
             this.x = x;
             this.y = y;

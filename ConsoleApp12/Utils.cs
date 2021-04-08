@@ -5,18 +5,15 @@ namespace ConsoleApp12
 {
     class Utils
     {
-        public const int RANG_RATE = 30;
-        public const int DOMAIN_RATE = RANG_RATE * 2;
-
-        public static double GetRangMetrik(int[][] r1, int[][] r2)
+        public static float GetRangMetrik(int[][] r1, int[][] r2, int rangRate)
         {
-            double acc = 0;
+            float acc = 0;
 
-            for (int i = 0; i < RANG_RATE; i++)
+            for (int i = 0; i < rangRate; i++)
             {
-                for (int j = 0; j < RANG_RATE; j++)
+                for (int j = 0; j < rangRate; j++)
                 {
-                    acc += Math.Pow(r1[j][i] - r2[j][i], 2);
+                    acc += (float) Math.Pow(r1[j][i] - r2[j][i], 2);
                 }
             }
 
@@ -63,25 +60,25 @@ namespace ConsoleApp12
             }
         }
 
-        public static int[][] ApplyTransforms(int[][] domain, int rotateAngle, double contrast, double brightness)
+        public static int[][] ApplyTransforms(int[][] domain, int rotateAngle, float contrast, float brightness, int rangRate)
         {
-            var rang = ReduceDomainPart(domain);
+            var rang = ReduceDomainPart(domain, rangRate);
 
-            RotateRang(rang, rotateAngle);
+            RotateRang(rang, rotateAngle, rangRate);
 
-            MultiplyRang(rang, contrast);
-            AddToRang(rang, (int)brightness);
+            MultiplyRang(rang, contrast, rangRate);
+            AddToRang(rang, (int)brightness, rangRate);
 
             return rang;
         }
 
         // Перенос значений из ранговой области на итоговый битмап
-        public static void ApplyRangPart(Bitmap bits, int[][] rang, int x, int y)
+        public static void ApplyRangPart(Bitmap bits, int[][] rang, int x, int y, int rangRate)
         {
 
-            for (int i = 0; i < RANG_RATE; i++)
+            for (int i = 0; i < rangRate; i++)
             {
-                for (int j = 0; j < RANG_RATE; j++)
+                for (int j = 0; j < rangRate; j++)
                 {
                     var val = rang[j][i];
                     bits.SetPixel(j + x, i + y, GetGrayscaleColor(val));
@@ -112,18 +109,21 @@ namespace ConsoleApp12
         }
 
         // Приведение доменной области к ранговой
-        public static int[][] ReduceDomainPart(int[][] domain)
+        public static int[][] ReduceDomainPart(int[][] domain, int rangRate)
         {
-            var res = new int[RANG_RATE][];
+            var res = new int[rangRate][];
 
-            for (int i = 0; i < RANG_RATE; i++)
+            for (int i = 0; i < rangRate; i++)
             {
-                res[i] = new int[RANG_RATE];
+                res[i] = new int[rangRate];
             }
 
-            for (int i = 0; i < RANG_RATE; i++)
+            Console.WriteLine(rangRate);
+            Console.WriteLine(domain.Length);
+
+            for (int i = 0; i < rangRate; i++)
             {
-                for (int j = 0; j < RANG_RATE; j++)
+                for (int j = 0; j < rangRate; j++)
                 {
                     res[j][i] = (int)((
                         domain[2 * i][2 * j] +
@@ -139,7 +139,7 @@ namespace ConsoleApp12
         }
 
         // Получение среднего значения по произвольной матрице
-        public static double GetAverage(int[][] matrix)
+        public static float GetAverage(int[][] matrix)
         {
             int yl = matrix.Length;
             if (yl == 0)
@@ -164,29 +164,29 @@ namespace ConsoleApp12
         }
 
         // Умножение всех элементов на значение
-        public static void MultiplyRang(int[][] mat, double c)
+        public static void MultiplyRang(int[][] mat, float c, int rangRate)
         {
-            for (int i = 0; i < RANG_RATE; i++)
+            for (int i = 0; i < rangRate; i++)
             {
-                for (int j = 0; j < RANG_RATE; j++)
+                for (int j = 0; j < rangRate; j++)
                 {
                     mat[j][i] = (int)(mat[j][i] * c);
                 }
             }
         }
 
-        public static int[][] CopyRang(int[][] src)
+        public static int[][] CopyRang(int[][] src, int rangRate)
         {
-            var res = new int[RANG_RATE][];
+            var res = new int[rangRate][];
 
-            for (int i = 0; i < RANG_RATE; i++)
+            for (int i = 0; i < rangRate; i++)
             {
-                res[i] = new int[RANG_RATE];
+                res[i] = new int[rangRate];
             }
 
-            for (int i = 0; i < RANG_RATE; i++)
+            for (int i = 0; i < rangRate; i++)
             {
-                for (int j = 0; j < RANG_RATE; j++)
+                for (int j = 0; j < rangRate; j++)
                 {
                     res[i][j] = src[i][j];
                 }
@@ -196,11 +196,11 @@ namespace ConsoleApp12
         }
 
         // Добавление значения ко всем элементам
-        public static void AddToRang(int[][] mat, int val)
+        public static void AddToRang(int[][] mat, int val, int rangRate)
         {
-            for (int i = 0; i < RANG_RATE; i++)
+            for (int i = 0; i < rangRate; i++)
             {
-                for (int j = 0; j < RANG_RATE; j++)
+                for (int j = 0; j < rangRate; j++)
                 {
                     mat[j][i] += val;
                 }
@@ -208,19 +208,19 @@ namespace ConsoleApp12
         }
 
         // Вращение против часовой стрелки без вспомогательных массивов
-        public static void RotateRang(int[][] rang, int angle)
+        public static void RotateRang(int[][] rang, int angle, int rangRate)
         {
             for (int curr = angle; curr > 0; curr -= 90)
             {
-                for (int i = 0; i < RANG_RATE / 2; i++)
+                for (int i = 0; i < rangRate / 2; i++)
                 {
-                    for (int j = i; j < RANG_RATE - i - 1; j++)
+                    for (int j = i; j < rangRate - i - 1; j++)
                     {
                         int temp = rang[i][j];
-                        rang[i][j] = rang[RANG_RATE - 1 - j][i] + 3;
-                        rang[RANG_RATE - 1 - j][i] = rang[RANG_RATE - 1 - i][RANG_RATE - 1 - j];
-                        rang[RANG_RATE - 1 - i][RANG_RATE - 1 - j] = rang[j][RANG_RATE - 1 - i];
-                        rang[j][RANG_RATE - 1 - i] = temp;
+                        rang[i][j] = rang[rangRate - 1 - j][i] + 3;
+                        rang[rangRate - 1 - j][i] = rang[rangRate - 1 - i][rangRate - 1 - j];
+                        rang[rangRate - 1 - i][rangRate - 1 - j] = rang[j][rangRate - 1 - i];
+                        rang[j][rangRate - 1 - i] = temp;
                     }
                 }
             }

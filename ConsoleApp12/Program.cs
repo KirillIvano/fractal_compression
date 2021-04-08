@@ -3,19 +3,25 @@ using System.Drawing;
 
 namespace ConsoleApp12
 {
+    // TODO: сделать ранги и домены передаваемыми
+    // TODO: вернуть флип
     class Encoder
     {
         private Bitmap bmp;
+        private int rangRate;
+        private int domainRate;
 
-        public Encoder(Bitmap bmp)
+        public Encoder(Bitmap bmp, int rangRate)
         {
             this.bmp = bmp;
+            this.rangRate = rangRate;
+            this.domainRate = 2 * rangRate;
         }
 
         private List<Transformation> GenerateTransformations()
         {
-            var w = bmp.Width / Utils.DOMAIN_RATE;
-            var h = bmp.Height / Utils.DOMAIN_RATE;
+            var w = bmp.Width / domainRate;
+            var h = bmp.Height / domainRate;
 
             var transformations = new List<Transformation>();
 
@@ -23,11 +29,11 @@ namespace ConsoleApp12
             {
                 for (int j = 0; j < w; j++)
                 {
-                    var domain = Utils.GetBitmapPart(bmp, j * Utils.DOMAIN_RATE, i * Utils.DOMAIN_RATE, Utils.DOMAIN_RATE);
+                    var domain = Utils.GetBitmapPart(bmp, j * domainRate, i * domainRate, domainRate);
                     
                     for (var k = 0; k < 6; k++)
                     {
-                        var res = Utils.ApplyTransforms(domain, k * 90, 1, 0);
+                        var res = Utils.ApplyTransforms(domain, k * 90, 1, 0, rangRate);
 
                         transformations.Add(new Transformation(
                             j,
@@ -45,8 +51,8 @@ namespace ConsoleApp12
 
         public void Encode()
         {
-            var w = bmp.Width / Utils.RANG_RATE;
-            var h = bmp.Height / Utils.RANG_RATE;
+            var w = bmp.Width / rangRate;
+            var h = bmp.Height / rangRate;
 
             var transformations = GenerateTransformations();
 
@@ -58,24 +64,24 @@ namespace ConsoleApp12
 
                 for (int j = 0; j < w; j++)
                 {
-                    double min = int.MaxValue;
+                    float min = int.MaxValue;
                     var rang = Utils.GetBitmapPart(
                         bmp,
-                        Utils.RANG_RATE * j,
-                        Utils.RANG_RATE * i,
-                        Utils.RANG_RATE
+                        rangRate * j,
+                        rangRate * i,
+                        rangRate
                     );
 
                     var rangAverage = Utils.GetAverage(rang);
 
                     foreach (var trans in transformations)
                     {
-                        double coeff = rangAverage / trans.avg;
+                        float coeff = rangAverage / trans.avg;
 
-                        int[][] approximated = Utils.CopyRang(trans.result);
-                        Utils.MultiplyRang(approximated, coeff);
+                        int[][] approximated = Utils.CopyRang(trans.result, rangRate);
+                        Utils.MultiplyRang(approximated, coeff, rangRate);
 
-                        var metric = Utils.GetRangMetrik(rang, approximated);
+                        var metric = Utils.GetRangMetrik(rang, approximated, rangRate);
 
                         if (metric < min)
                         {
@@ -90,9 +96,9 @@ namespace ConsoleApp12
             {
                 for (int j = 0; j < w; j++)
                 {
-                    var noiseDomain = Utils.GenerateNoise(Utils.RANG_RATE);
-                   
-                    Utils.ApplyRangPart(bmp, noiseDomain, j * Utils.RANG_RATE, i * Utils.RANG_RATE);
+                    var noiseDomain = Utils.GenerateNoise(rangRate);
+                    
+                    Utils.ApplyRangPart(bmp, noiseDomain, j * rangRate, i * rangRate, rangRate);
                 }
             }
 
@@ -103,10 +109,10 @@ namespace ConsoleApp12
                     for (int j = 0; j < w; j++)
                     {
                         var trans = transformationsMatrix[i][j];
-                        var domain = Utils.GetBitmapPart(bmp, trans.x * Utils.DOMAIN_RATE, trans.y * Utils.DOMAIN_RATE, Utils.DOMAIN_RATE);
-                        var res = Utils.ApplyTransforms(domain, trans.angle, trans.c, trans.h);
+                        var domain = Utils.GetBitmapPart(bmp, trans.x * domainRate, trans.y * domainRate, domainRate);
+                        var res = Utils.ApplyTransforms(domain, trans.angle, trans.c, trans.h, rangRate);
 
-                        Utils.ApplyRangPart(bmp, res, j * Utils.RANG_RATE, i * Utils.RANG_RATE);
+                        Utils.ApplyRangPart(bmp, res, j * rangRate, i * rangRate, rangRate);
                     }
                 }
 
@@ -123,9 +129,9 @@ namespace ConsoleApp12
             var bits = new Bitmap("C:/Users/ivann/source/repos/ConsoleApp12/ConsoleApp12/sample.bmp");
             Utils.TranformToGrayScale(bits);
             bits.Save("C:/Users/ivann/source/repos/ConsoleApp12/ConsoleApp12/gray.bmp");
-            var encoder = new Encoder(bits);
-            encoder.Encode();
 
+            var encoder = new Encoder(bits, 20);
+            encoder.Encode();
         }
     }
 }
