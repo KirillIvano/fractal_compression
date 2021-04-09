@@ -6,17 +6,15 @@ namespace ConsoleApp12
         public int x;
         public int y;
         public float c;
-        public int h;
 
         public int angle;
 
-        public MemTransformation(int x, int y, int angle, float c, int h)
+        public MemTransformation(int x, int y, int angle, float c)
         {
             this.x = x;
             this.y = y;
 
             this.angle = angle;
-            this.h = h;
             this.c = c;
         }
     }

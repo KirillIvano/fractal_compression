@@ -60,14 +60,13 @@ namespace ConsoleApp12
             }
         }
 
-        public static int[][] ApplyTransforms(int[][] domain, int rotateAngle, float contrast, float brightness, int rangRate)
+        public static int[][] ApplyTransforms(int[][] domain, int rotateAngle, float contrast, int rangRate)
         {
             var rang = ReduceDomainPart(domain, rangRate);
 
             RotateRang(rang, rotateAngle, rangRate);
 
             MultiplyRang(rang, contrast, rangRate);
-            AddToRang(rang, (int)brightness, rangRate);
 
             return rang;
         }
@@ -117,9 +116,6 @@ namespace ConsoleApp12
             {
                 res[i] = new int[rangRate];
             }
-
-            Console.WriteLine(rangRate);
-            Console.WriteLine(domain.Length);
 
             for (int i = 0; i < rangRate; i++)
             {
